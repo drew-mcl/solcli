@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"solcli/pkg/client"
+	"solcli/pkg/models"
 
 	"solcli/pkg/api"
 
@@ -14,10 +15,14 @@ import (
 
 func NewCreateCmd(c *client.Client) *cobra.Command {
 
-	opts := &api.MsgVpnObject{}
+	opts := models.MsgVpnData{
+		SempOverMsgBusAdminClientEnabled: true,
+		SempOverMsgBusAdminEnabled:       true,
+		SempOverMsgBusShowEnabled:        true,
+	}
 
 	cmd := &cobra.Command{
-		Use:   "create",
+		Use:   "create [vpnName]",
 		Short: "Create a VPN",
 		Long: `Create a VPN.
 The VPN will be created with the following defaults:
@@ -32,7 +37,7 @@ The VPN will be created with the following defaults:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			slog.Info("Creating VPN...")
 
-			ah := api.NewAPIHandler(c, api.VPNAPIPath)
+			ah := api.NewAPIHandler(c, VPNAPIPath)
 
 			opts.MsgVpnName = args[0]
 
@@ -45,17 +50,14 @@ The VPN will be created with the following defaults:
 				slog.String("jsonOpts", string(jsonOpts)),
 			)
 
-			vpn, err := ah.MsgVpnAPIRequest("POST", bytes.NewBuffer(jsonOpts))
+			_, err = ah.MsgVpnAPIRequest("POST", bytes.NewBuffer(jsonOpts))
 			if err != nil {
 				slog.Error("Failed to create VPN!",
 					slog.Any("error", err),
 				)
 				os.Exit(1)
 			}
-			slog.Info("VPN created successfully!",
-				slog.Any("vpn", vpn),
-			)
-
+			slog.Info("VPN created successfully!")
 			return nil
 		},
 	}

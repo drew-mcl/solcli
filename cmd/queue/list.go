@@ -1,7 +1,8 @@
-package vpn
+package queue
 
 import (
 	"os"
+	"path"
 	"solcli/pkg/api"
 	"solcli/pkg/client"
 	"solcli/pkg/printer"
@@ -13,24 +14,26 @@ import (
 func NewListCmd(c *client.Client) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List VPNs",
-		Long: `List VPNs.
-This command will list all VPNs on the Solace PubSub+ Event Broker.`,
+		Short: "List queues",
+		Long: `List queues.
+This command will list all queues on the Solace PubSub+ Event Broker.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			slog.Info("Listing VPNs...")
+			slog.Info("Listing Queues", slog.Any("vpn", VPNName))
 
-			ah := api.NewAPIHandler(c, VPNAPIPath)
+			qPath := path.Join(QueueAPIPath, VPNName, "queues")
 
-			apiResp, err := ah.MsgVpnAPIRequest("GET", nil)
+			ah := api.NewAPIHandler(c, qPath)
+
+			apiResp, err := ah.QueueAPIRequest("GET", nil)
 
 			if err != nil {
-				slog.Error("Failed to list VPNs!",
+				slog.Error("Failed to list Queues!",
 					slog.Any("error", err),
 				)
 				os.Exit(1)
 			}
-			slog.Info("VPNs listed successfully")
+			slog.Info("Queues listed successfully")
 			opts := printer.PrintOptions{
 				OmitEmpty: true,
 				AllFields: true,

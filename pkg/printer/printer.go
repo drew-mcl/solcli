@@ -5,7 +5,6 @@ import (
 	"reflect"
 
 	"github.com/fatih/color"
-	"golang.org/x/exp/slog"
 )
 
 type PrintOptions struct {
@@ -17,109 +16,51 @@ type PrintOptions struct {
 	AllFields     bool
 }
 
-func Print(data interface{}, opts PrintOptions) {
-	slog.Debug("Attempting to print data", slog.Any("data", data))
-
+func Print(data interface{}, opts PrintOptions, indent int) {
 	v := reflect.ValueOf(data)
+	t := reflect.TypeOf(data)
 
-	if v.Kind() == reflect.Ptr && !v.IsNil() {
+	if t.Kind() == reflect.Ptr {
 		v = v.Elem()
-	}
-
-	if v.Kind() != reflect.Struct {
-		fmt.Println("Print() received a non-struct type.")
-		return
-	}
-
-	t := v.Type()
-
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		value := v.Field(i)
-
-		if !opts.AllFields && opts.PrintField != "" && field.Name != opts.PrintField {
-			continue
-		}
-
-		color.Cyan("%s: ", field.Name)
-		printRecursive(value, opts, 0)
-	}
-}
-
-func printRecursive(v reflect.Value, opts PrintOptions, depth int) {
-	if !opts.AllFields && depth > opts.DisplayDepth {
-		return
+		t = v.Type()
 	}
 
 	switch v.Kind() {
-	case reflect.Ptr:
-		printRecursive(v.Elem(), opts, depth+1)
 	case reflect.Struct:
 		for i := 0; i < v.NumField(); i++ {
-			field := v.Type().Field(i)
-			value := v.Field(i)
+			field := v.Field(i)
+			fieldType := t.Field(i)
+			fieldName := fieldType.Name
 
-			if opts.OmitEmpty && isEmptyValue(value) {
+			// Skip fields based on options
+			if !opts.AllFields && opts.PrintField != "" && fieldName != opts.PrintField {
 				continue
 			}
 
-			omit := false
-			for _, omitField := range opts.OmitFields {
-				if field.Name == omitField {
-					omit = true
-					break
-				}
+			// Indentation for visual clarity
+			for j := 0; j < indent; j++ {
+				fmt.Print("  ")
 			}
 
-			if omit {
-				continue
-			}
+			fmt.Printf("%s: ", color.CyanString(fieldName))
 
-			if len(opts.DisplayFields) > 0 {
-				display := false
-				for _, displayField := range opts.DisplayFields {
-					if field.Name == displayField {
-						display = true
-						break
-					}
+			if field.Kind() == reflect.Slice {
+				fmt.Println()
+				for idx := 0; idx < field.Len(); idx++ {
+					Print(field.Index(idx).Interface(), opts, indent+1)
 				}
-
-				if !display {
-					continue
-				}
+			} else if field.Kind() == reflect.Struct || (field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct) {
+				fmt.Println()
+				Print(field.Interface(), opts, indent+1)
+			} else {
+				fmt.Println(field.Interface())
 			}
-
-			color.Cyan("%s: ", field.Name)
-			printRecursive(value, opts, depth+1)
 		}
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
-			printRecursive(v.Index(i), opts, depth+1)
-		}
-	case reflect.Map:
-		for _, key := range v.MapKeys() {
-			fmt.Println(key.Interface(), ": ")
-			printRecursive(v.MapIndex(key), opts, depth+1)
+			Print(v.Index(i).Interface(), opts, indent)
 		}
 	default:
-		fmt.Println(v.Interface())
+		fmt.Println(data)
 	}
-}
-
-func isEmptyValue(v reflect.Value) bool {
-	switch v.Kind() {
-	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
-		return v.Len() == 0
-	case reflect.Bool:
-		return !v.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return v.Int() == 0
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return v.Uint() == 0
-	case reflect.Float32, reflect.Float64:
-		return v.Float() == 0
-	case reflect.Interface, reflect.Ptr:
-		return v.IsNil()
-	}
-	return false
 }

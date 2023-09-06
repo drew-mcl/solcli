@@ -62,12 +62,12 @@ func validateURL(u *url.URL) error {
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return fmt.Errorf("invalid scheme")
+		return fmt.Errorf("invalid url scheme. expected http or https, got: %s", u.Scheme)
 	}
 
 	host, port, err := net.SplitHostPort(u.Host)
 	if err != nil {
-		return fmt.Errorf("invalid host")
+		return fmt.Errorf("invalid host: %s", u.Host)
 	}
 
 	if host == "" {
@@ -84,7 +84,7 @@ func validateURL(u *url.URL) error {
 	}
 
 	if p < 1 && p > 65535 {
-		return fmt.Errorf("invalid port")
+		return fmt.Errorf("invalid port expected between range 1-65535, got: %d", p)
 	}
 
 	slog.Debug("URL validated successfully",
@@ -111,7 +111,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 }
 
 func (c *Client) AppendPath(appendPath string) error {
-	slog.Debug("Client has been passed additonal path to append base URL",
+	slog.Debug("Client has been passed additional path to append base URL",
 		slog.Any("current_base_url", c.BaseURL),
 		slog.String("path", appendPath),
 	)
@@ -127,13 +127,12 @@ func (c *Client) AppendPath(appendPath string) error {
 }
 
 func (c *Client) MakeRequest(method string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(method, c.BaseURL.String(), nil)
+	req, err := http.NewRequest(method, c.BaseURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
 
-	if body != nil {
-		req.Body = nil
+	if body == nil {
 		req.Body = http.NoBody
 		req.ContentLength = 0
 	}
@@ -142,18 +141,10 @@ func (c *Client) MakeRequest(method string, body io.Reader) (*http.Request, erro
 }
 
 func (c *Client) SendRequest(req *http.Request) (*http.Response, error) {
-	slog.Debug("Sending request to Solace PubSub+ Event Broker",
-		slog.Any("request", req),
-	)
-
+	slog.Debug("Send Request", slog.Any("method", req.Method), slog.Any("url", req.URL))
 	resp, err := c.Do(req)
 	if err != nil {
 		return nil, err
 	}
-
-	slog.Debug("Request sent successfully",
-		slog.Any("response", resp),
-	)
-
 	return resp, nil
 }

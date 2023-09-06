@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"solcli/cmd/queue"
 	"solcli/cmd/vpn"
 	"solcli/pkg/client"
 	"solcli/pkg/loghandler"
@@ -40,6 +41,8 @@ Docker image, but can be used with any Solace PubSub+ Event Broker instance.`,
 			h := loghandler.New(os.Stderr, &slog.HandlerOptions{Level: programLevel})
 			slog.SetDefault(slog.New(h))
 
+			//Validate solace authentication
+
 			if logLevel != "" {
 				levelStr := strings.ToUpper(logLevel)
 				level, ok := logLevels[levelStr]
@@ -71,11 +74,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "Password to authenticate with")
 	rootCmd.PersistentFlags().StringVarP(&rawurl, "url", "U", "", "URL to connect to")
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "", "Log level to use")
+	//Set name, password and url as required flags
 }
 
 func main() {
 	rootCmd.AddCommand(
 		vpn.NewVPNCmd(c),
+		queue.NewQueueCmd(c),
 	)
 	if err := rootCmd.Execute(); err != nil {
 		slog.Error("Failed to execute command!",

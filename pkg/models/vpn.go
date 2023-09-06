@@ -1,10 +1,16 @@
-package api
+package models
 
-import (
-	"io"
-)
+type MsgVpnList struct {
+	Data  []MsgVpnData `json:"data,omitempty"`
+	Links []VPNLinks   `json:"links,omitempty"`
+	Meta  Meta         `json:"meta,omitempty"`
+}
 
-var VPNAPIPath = "/SEMP/v2/monitor/msgVpns"
+type MsgVpnSingle struct {
+	Data  MsgVpnData `json:"data,omitempty"`
+	Links VPNLinks   `json:"links,omitempty"`
+	Meta  Meta       `json:"meta,omitempty"`
+}
 
 type EventConnectionCountThreshold struct {
 	ClearPercent int `json:"clearPercent,omitempty"`
@@ -37,12 +43,6 @@ type EventIngressFlowCountThreshold struct {
 type EventIngressMsgRateThreshold struct {
 	ClearValue int `json:"clearValue,omitempty"`
 	SetValue   int `json:"setValue,omitempty"`
-}
-type EventMsgSpoolUsageThreshold struct {
-	ClearPercent int `json:"clearPercent,omitempty"`
-	ClearValue   int `json:"clearValue,omitempty"`
-	SetPercent   int `json:"setPercent,omitempty"`
-	SetValue     int `json:"setValue,omitempty"`
 }
 type EventServiceAmqpConnectionCountThreshold struct {
 	ClearPercent int `json:"clearPercent,omitempty"`
@@ -92,7 +92,7 @@ type EventTransactionCountThreshold struct {
 	SetPercent   int `json:"setPercent,omitempty"`
 	SetValue     int `json:"setValue,omitempty"`
 }
-type MsgVpnObject struct {
+type MsgVpnData struct {
 	Alias                                                   string                                           `json:"alias,omitempty"`
 	AuthenticationBasicEnabled                              bool                                             `json:"authenticationBasicEnabled,omitempty"`
 	AuthenticationBasicProfileName                          string                                           `json:"authenticationBasicProfileName,omitempty"`
@@ -216,14 +216,33 @@ type MsgVpnObject struct {
 	TLSAllowDowngradeToPlainTextEnabled                     bool                                             `json:"tlsAllowDowngradeToPlainTextEnabled,omitempty"`
 }
 
-func (h *APIHanlder) MsgVpnAPIRequest(method string, body io.Reader) (*APIResponse, error) {
-
-	var response APIResponse
-	response.Data = MsgVpnObject{}
-
-	err := h.APIRequest("GET", nil, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
+type VPNLinks struct {
+	ACLProfilesURI                  string `json:"aclProfilesUri,omitempty"`
+	AuthenticationOauthProfilesURI  string `json:"authenticationOauthProfilesUri,omitempty"`
+	AuthenticationOauthProvidersURI string `json:"authenticationOauthProvidersUri,omitempty"`
+	AuthorizationGroupsURI          string `json:"authorizationGroupsUri,omitempty"`
+	BridgesURI                      string `json:"bridgesUri,omitempty"`
+	CertMatchingRulesURI            string `json:"certMatchingRulesUri,omitempty"`
+	ClientProfilesURI               string `json:"clientProfilesUri,omitempty"`
+	ClientUsernamesURI              string `json:"clientUsernamesUri,omitempty"`
+	DistributedCachesURI            string `json:"distributedCachesUri,omitempty"`
+	DmrBridgesURI                   string `json:"dmrBridgesUri,omitempty"`
+	JndiConnectionFactoriesURI      string `json:"jndiConnectionFactoriesUri,omitempty"`
+	JndiQueuesURI                   string `json:"jndiQueuesUri,omitempty"`
+	JndiTopicsURI                   string `json:"jndiTopicsUri,omitempty"`
+	KafkaReceiversURI               string `json:"kafkaReceiversUri,omitempty"`
+	KafkaSendersURI                 string `json:"kafkaSendersUri,omitempty"`
+	MqttRetainCachesURI             string `json:"mqttRetainCachesUri,omitempty"`
+	MqttSessionsURI                 string `json:"mqttSessionsUri,omitempty"`
+	ProxiesURI                      string `json:"proxiesUri,omitempty"`
+	QueueTemplatesURI               string `json:"queueTemplatesUri,omitempty"`
+	QueuesURI                       string `json:"queuesUri,omitempty"`
+	ReplayLogsURI                   string `json:"replayLogsUri,omitempty"`
+	ReplicatedTopicsURI             string `json:"replicatedTopicsUri,omitempty"`
+	RestDeliveryPointsURI           string `json:"restDeliveryPointsUri,omitempty"`
+	SequencedTopicsURI              string `json:"sequencedTopicsUri,omitempty"`
+	TelemetryProfilesURI            string `json:"telemetryProfilesUri,omitempty"`
+	TopicEndpointTemplatesURI       string `json:"topicEndpointTemplatesUri,omitempty"`
+	TopicEndpointsURI               string `json:"topicEndpointsUri,omitempty"`
+	URI                             string `json:"uri,omitempty"`
 }
